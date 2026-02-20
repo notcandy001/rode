@@ -416,6 +416,9 @@ PanelWindow {
     }
 
     function updateMpvShader() {
+        if (getFileType(currentWallpaper) !== "video") {
+            return;
+        }
         if (!wallpaperAdapter.tintEnabled) {
             updateMpvRuntime(false);
             return;
