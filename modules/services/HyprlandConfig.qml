@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
+import qs.modules.services
 import qs.config
 import qs.modules.theme
 import qs.modules.bar
@@ -57,7 +57,7 @@ QtObject {
     }
 
     function formatColorForHyprland(color) {
-        // Hyprland expects colors in format: rgb(rrggbb) or rgba(rrggbbaa)
+        // AxctlService expects colors in format: rgb(rrggbb) or rgba(rrggbbaa)
         const r = Math.round(color.r * 255).toString(16).padStart(2, '0');
         const g = Math.round(color.g * 255).toString(16).padStart(2, '0');
         const b = Math.round(color.b * 255).toString(16).padStart(2, '0');
@@ -84,7 +84,7 @@ QtObject {
 
         // Wait for layout to be ready.
         if (!GlobalStates.hyprlandLayoutReady) {
-            console.log("HyprlandConfig: Esperando que se detecte el layout de Hyprland...");
+            console.log("HyprlandConfig: Esperando que se detecte el layout de AxctlService...");
             return;
         }
 
@@ -395,7 +395,7 @@ QtObject {
     }
 
     property Connections hyprlandConnections: Connections {
-        target: Hyprland
+        target: AxctlService
         function onRawEvent(event) {
             if (event.name === "configreloaded") {
                 console.log("HyprlandConfig: Detectado configreloaded, reaplicando configuración...");

@@ -1,7 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Quickshell.Hyprland
+import qs.modules.services
 import qs.config
 import qs.modules.globals
 
@@ -114,7 +114,7 @@ QtObject {
 
         // Wait for layout to be ready.
         if (!GlobalStates.hyprlandLayoutReady) {
-            console.log("HyprlandKeybinds: Esperando que se detecte el layout de Hyprland...");
+            console.log("HyprlandKeybinds: Esperando que se detecte el layout de AxctlService...");
             return;
         }
 
@@ -338,7 +338,7 @@ QtObject {
     }
 
     property Connections hyprlandConnections: Connections {
-        target: Hyprland
+        target: AxctlService
         function onRawEvent(event) {
             if (event.name === "configreloaded") {
                 console.log("HyprlandKeybinds: Detectado configreloaded, reaplicando keybindings...");
