@@ -39,7 +39,7 @@ Item {
 
     // Monitor reference and reference to toplevels on monitor
     readonly property var hyprlandMonitor: AxctlService.monitorFor(screen)
-    readonly property var toplevels: hyprlandMonitor.activeWorkspace.toplevels.values
+    readonly property var toplevels: (!hyprlandMonitor || !hyprlandMonitor.activeWorkspace || !AxctlService.clients.values) ? [] : AxctlService.clients.values.filter(c => c.workspace.id === hyprlandMonitor.activeWorkspace.id)
 
     // Fullscreen detection - check if a toplevel is fullscreen on this screen
     readonly property bool activeWindowFullscreen: {
@@ -47,8 +47,7 @@ Item {
 
         // Check all toplevels on active workspace
         for (var i = 0; i < toplevels.length; i++) {
-            // Checks first if the wayland handle is ready
-            if (toplevels[i].wayland && toplevels[i].wayland.fullscreen == true) {
+            if (toplevels[i].fullscreen == true) {
                return true;
             }
         }
