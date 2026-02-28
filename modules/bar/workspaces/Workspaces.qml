@@ -130,13 +130,6 @@ Item {
     }
 
     Connections {
-        target: monitor
-        function onActiveWorkspaceChanged() {
-            updateTimer.restart();
-        }
-    }
-
-    Connections {
         target: activeWindow
         function onActivatedChanged() {
             updateTimer.restart();
