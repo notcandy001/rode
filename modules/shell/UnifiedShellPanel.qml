@@ -142,7 +142,7 @@ PanelWindow {
     }
 
     // Focus Grab for Notch
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         windows: {
             let windowList = [unifiedPanel];

@@ -100,7 +100,7 @@ PopupWindow {
     // Focus grab for click-outside-to-close behavior
     property bool focusActive: false
 
-    HyprlandFocusGrab {
+    FocusGrab {
         id: focusGrab
         active: root.visible && root.focusActive
         windows: [root]
