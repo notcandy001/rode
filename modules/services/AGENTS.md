@@ -1,32 +1,40 @@
-# SERVICES AGENTS
+# SERVICES KNOWLEDGE BASE
 
 ## OVERVIEW
-The `services/` directory contains the backend logic and system interfaces of Ambxst. These are primarily Singletons that bridge Wayland protocols, CLI tools (nmcli, upower, etc.), and AI providers to the QML UI layer. 
-
-The architecture follows a "Reactive Singleton" pattern where services maintain internal state derived from asynchronous system calls and expose it through QML properties.
+Backend singletons bridging Wayland protocols, CLI tools (nmcli, upower, wpctl, etc.), and AI providers to the QML UI layer. 30+ services following a "Reactive Singleton" pattern — internal state derived from async system calls, exposed as QML properties.
 
 ## WHERE TO LOOK
-- `Battery.qml` / `NetworkService.qml`: Core system status providers using UPower and nmcli.
-- `Audio.qml` / `EasyEffectsService.qml`: PulseAudio/PipeWire and DSP control logic.
-- `Notifications.qml`: Full DBus notification server implementation with persistence.
-- `Ai.qml` & `ai/`: Hub for AI assistant strategies (OpenAI, Gemini, Mistral).
-- `HyprlandConfig.qml` / `GlobalShortcuts.qml`: Compositor-level interaction and keybind management.
-- `StateService.qml`: Central persistence for transient session state (tabs, visibility).
-- `AppSearch.qml`: Application indexing and search logic.
-- `MprisController.qml`: Media control interface for active players.
+| Task | Location | Notes |
+|------|----------|-------|
+| **Audio/Volume** | `Audio.qml` | PipeWire/PulseAudio via `wpctl`. Sink/source management |
+| **Network/WiFi** | `NetworkService.qml` | `nmcli` wrapper. WiFi scanning, connection, status |
+| **Battery/Power** | `Battery.qml` | UPower integration. Percentage, charging state, time remaining |
+| **Bluetooth** | `BluetoothService.qml` | Device listing, connect/disconnect |
+| **Brightness** | `Brightness.qml` | Per-monitor brightness via `brightnessctl` |
+| **AI Assistant** | `Ai.qml` + `ai/strategies/` | Multi-provider (OpenAI, Gemini, Mistral). Strategy pattern |
+| **Clipboard** | `ClipboardService.qml` | Persistent clipboard via `clipboard.db` + helper scripts |
+| **Media** | `MprisController.qml` | MPRIS D-Bus player control |
+| **Notifications** | `Notifications.qml` | D-Bus notification server with persistence |
+| **System Monitor** | `SystemResources.qml` | CPU, RAM, GPU, temps via Python script |
+| **Compositor** | `AxctlService.qml` | Abstraction layer for compositor IPC (focus, dispatch) |
+| **Visibility** | `Visibilities.qml` | Per-screen UI visibility/layering orchestration |
+| **State** | `StateService.qml` | JSON persistence for session state (tab positions, etc.) |
+| **Focus** | `FocusGrabManager.qml` | Input focus coordination across overlays |
+| **Desktop** | `DesktopService.qml` | Desktop icon grid positioning and management |
+| **App Search** | `AppSearch.qml` | Application indexing for launcher |
+| **Weather** | `WeatherService.qml` | Forecast, sunrise/sunset, day/night detection |
+| **Keybinds** | `GlobalShortcuts.qml` | Compositor-level keybind management |
 
 ## CONVENTIONS
-- **Singletons**: Must use `pragma Singleton` at the top and the `Singleton { id: root }` root component.
-- **System Access**: 
-    - Prefer `Quickshell.Io.Process` for CLI interaction. 
-    - Use `SplitParser` for line-by-line stdout handling.
-- **Naming**:
-    - **Properties**: Use camelCase (e.g., `wifiEnabled`, `isCharging`).
-    - **Methods**: `update()` for manual polling; `toggleX()` for boolean switches.
-    - **Signals**: Use descriptive past-tense (`initDone`, `notify`) or action-based (`discard`).
-- **Data Persistence**:
-    - Use `FileView` for direct JSON file manipulation.
-    - Reference `Config` singleton for global settings, but keep service-specific state local.
-- **Async Safety**: Use `Qt.callLater()` when modifying lists or large models inside process handlers to prevent race conditions during list model updates.
-- **Self-Sufficiency**: Services should handle their own lifecycle (e.g., `Component.onCompleted: update()`).
-- **Error Handling**: Always provide safe fallback values for properties (e.g., `available: device !== null`).
+- **Singleton pattern**: `pragma Singleton` + `Singleton { id: root }` root component.
+- **System access**: Prefer `Quickshell.Io.Process` with `SplitParser` for line-by-line stdout handling.
+- **Naming**: Properties in camelCase (`wifiEnabled`, `isCharging`). Methods: `update()` for polling, `toggleX()` for booleans. Signals: past-tense or action-based (`initDone`, `discard`).
+- **Persistence**: `FileView` for direct JSON manipulation. Reference `Config` for global settings; keep service-specific state local.
+- **Async safety**: `Qt.callLater()` when modifying lists/models inside process handlers.
+- **Self-init**: Services handle own lifecycle via `Component.onCompleted: update()`.
+- **Error handling**: Always provide safe fallback values (`available: device !== null`).
+
+## ANTI-PATTERNS
+- Polling without a timer guard (use `Timer` with configurable intervals).
+- Modifying list models synchronously inside `Process.onStdout` handlers.
+- Creating new services without registering them in `shell.qml` init sequence.

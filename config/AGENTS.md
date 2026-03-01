@@ -1,45 +1,32 @@
 # CONFIG KNOWLEDGE BASE
 
 ## OVERVIEW
-The configuration system in Ambxst is a reactive, file-backed architecture built on `Quickshell.Io`. 
-It serves as the source of truth for all shell modules (Bar, AI, Theme, etc.), managing state through 
-synchronized JSON files stored in `~/.config/ambxst/config/`. 
-
-The system is designed for high availability; it gracefully handles missing or malformed configuration 
-files by falling back to hardcoded defaults without interrupting the user experience. This robustness 
-ensures that even a manual editing error by the user doesn't crash the entire shell environment.
+Reactive, file-backed configuration system built on `Quickshell.Io`. Source of truth for all shell modules. Stores JSON in `~/.config/ambxst/config/`. Gracefully handles missing/malformed files by falling back to hardcoded defaults.
 
 ## STRUCTURE
-- **Config.qml**: The massive core singleton (`pragma Singleton`). It orchestrates the lifecycle of 
-  configuration data, utilizing `FileView` to monitor disk changes and `JsonAdapter` to create a live, 
-  bidirectional bridge between JSON objects and QML properties.
-- **defaults/*.js**: These JavaScript modules define the "soul" of the configuration. Each file 
-  (e.g., `bar.js`, `theme.js`) exports a `data` object that serves as the blueprint for initial 
-  file generation and the baseline for validation.
-- **ConfigValidator.js**: A specialized library for deep-merging user settings with defaults. It 
-  ensures that even as the project evolves and new keys are added, older configuration files remain 
-  compatible and type-safe.
+- **Config.qml**: Core singleton (>3100 lines). `FileView` monitors disk; `JsonAdapter` creates bidirectional QML bindings. Each module domain (bar, theme, ai, dock, etc.) has its own `FileView`/`JsonAdapter` pair.
+- **defaults/*.js**: JavaScript modules exporting a `data` object — the blueprint for initial file generation and validation baseline. Files: `bar.js`, `theme.js`, `ai.js`, `compositor.js`, `dock.js`, `notch.js`, `desktop.js`, `overview.js`, `notifications.js`, `tools.js`, `lockscreen.js`, `system.js`, `weather.js`.
+- **ConfigValidator.js**: Recursive `validate()` function for deep-merging user settings with defaults. Handles type coercion and constraint enforcement (e.g., `gradientType` must be `"linear"`, `"radial"`, or `"halftone"`).
+- **pam/**: PAM configuration for lockscreen authentication.
 
 ## WHERE TO LOOK
-- **Validation Logic**: `config/ConfigValidator.js` houses the recursive `validate()` function. 
-  This is where you implement constraints for specific fields, such as ensuring `gradientType` only 
-  accepts "linear", "radial", or "halftone".
-- **Bootstrapping**: The initialization sequence resides in `Config.qml` (look for the `Process` 
-  component). It identifies missing `.json` files and populates them using the logic defined in 
-  the `StdioCollector`'s `onStreamFinished` handler.
-- **File Synchronization**: Search for `FileView` and `JsonAdapter` pairs in `Config.qml`. Each 
-  module has its own dedicated pair to ensure isolated and reliable persistence.
+| Task | Location | Notes |
+|------|----------|-------|
+| **Add config key** | `defaults/<domain>.js` + `Config.qml` | BOTH must be updated |
+| **Validation logic** | `ConfigValidator.js` | Recursive `validate()` with type constraints |
+| **Bootstrapping** | `Config.qml` (`Process` + `StdioCollector`) | Detects missing JSON, populates from defaults |
+| **File sync** | `Config.qml` (`FileView`/`JsonAdapter` pairs) | Each domain has isolated persistence |
+| **Bulk updates** | `Config.qml` (`pauseAutoSave`) | Prevents multiple disk writes during batch changes |
+| **Load gating** | `Config.qml` (`initialLoadComplete`) | Guards components needing fully-initialized config |
 
 ## CONVENTIONS
-- **Atomic Operations**: Always update `defaults/*.js` when introducing new configuration keys to 
-  ensure they are propagated to new users and validated for existing ones.
-- **Data Binding**: Bind UI elements to `Config.<module>.<property>`. Avoid local state for persistent 
-  settings; let the `Config` singleton handle the heavy lifting and persistence logic.
-- **Auto-save Behavior**: Changes to `JsonObject` properties are automatically persisted to disk 
-  via their associated `FileView`. Use `root.pauseAutoSave` if you need to perform bulk updates 
-  without triggering multiple disk writes.
-- **Reactive Defaults**: All configuration access should assume the data might be in the process 
-  of loading or reloading. The `initialLoadComplete` property in `Config.qml` can be used to gate 
-  components that require a fully initialized environment.
-- **JSON Formatting**: Configuration files are written with 4-space indentation for human 
-  readability, managed during the initialization and saving processes.
+- **Atomic defaults**: ALWAYS update `defaults/*.js` when adding new config keys.
+- **Bind to Config**: UI elements bind to `Config.<module>.<property>`. Never use local state for persistent settings.
+- **Auto-save**: `JsonObject` changes auto-persist via `FileView`. Use `root.pauseAutoSave` for bulk updates.
+- **Reactive defaults**: Config access may occur during load/reload. Gate with `initialLoadComplete` if needed.
+- **JSON formatting**: 4-space indent for human readability.
+
+## ANTI-PATTERNS
+- Adding a config key without a corresponding default in `defaults/*.js`.
+- Modifying `Config` properties directly outside the `JsonAdapter` binding system.
+- Reading config values before `initialLoadComplete` without a null guard.

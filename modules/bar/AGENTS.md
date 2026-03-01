@@ -1,28 +1,31 @@
 # BAR MODULE KNOWLEDGE BASE
 
 ## OVERVIEW
-The `bar` module provides the primary system panel(s). It supports horizontal (top/bottom) and vertical (left/right) orientations, reactive auto-hiding, and space reservation via Quickshell's `PanelWindow`.
+Primary system panel supporting horizontal (top/bottom) and vertical (left/right) orientations, reactive auto-hiding, and space reservation via Quickshell's `PanelWindow`. Rendered inside `UnifiedShellPanel`.
 
 ## STRUCTURE
 - **Core Layout**:
-  - `Bar.qml`: The `PanelWindow` wrapper; handles position, keyboard focus, and exclusive zones.
-  - `BarContent.qml`: Orchestrates widget groups using `RowLayout`/`ColumnLayout` and manages auto-hide animations.
-  - `BarBg.qml` / `BarBgShadow.qml`: Aesthetic layers for the bar background.
-- **Widgets & Components**:
-  - `clock/`: Time, date, and weather integration.
-  - `systray/`: SNI-based system tray implementation.
-  - `workspaces/`: Hyprland workspace visualization and navigation.
-  - `IntegratedDock.qml`: A taskbar-style dock that embeds directly into the bar layout.
-  - **System Indicators**: Sliders and buttons for volume, brightness, battery, and power profiles.
+  - `BarContent.qml` (767 lines): Orchestrates widget groups via `RowLayout`/`ColumnLayout`. Manages auto-hide with `reveal` property + `hideDelayTimer`.
+  - `BarBg.qml` / `BarBgShadow.qml`: Background aesthetic layers.
+- **Widgets**:
+  - `clock/`: Time, date, weather integration (`Clock.qml` — 672 lines).
+  - `systray/`: SNI-based system tray.
+  - `workspaces/`: Compositor workspace visualization and navigation.
+  - `IntegratedDock.qml`: Taskbar-style dock embedded directly into bar layout.
+- **System Indicators**: Volume, brightness, battery, power profile sliders/buttons.
 
 ## WHERE TO LOOK
-- **Auto-hide Logic**: `BarContent.qml` (see `reveal` property and `hideDelayTimer`).
-- **Space Reservation**: `Bar.qml` (`exclusiveZone` calculation).
-- **Adding Widgets**: Update `horizontalLayout` or `verticalLayout` in `BarContent.qml`.
-- **Integrated Dock**: `IntegratedDock.qml` for app switching logic within the bar.
+| Task | Location | Notes |
+|------|----------|-------|
+| **Auto-hide logic** | `BarContent.qml` | `reveal` property + `hideDelayTimer` |
+| **Space reservation** | Parent: `shell.qml` → `ReservationWindows` | `exclusiveZone` calculation |
+| **Adding widgets** | `BarContent.qml` | Update `horizontalLayout` or `verticalLayout` |
+| **Integrated dock** | `IntegratedDock.qml` | App switching within bar |
+| **Clock/Weather** | `clock/Clock.qml` | Complex: 672 lines, multiple display modes |
 
 ## CONVENTIONS
-- **Adaptive Styling**: Widgets use `startRadius` and `endRadius` to maintain "pill" continuity depending on their position in a group.
-- **Visibility**: Panels must register with `Visibilities` in `Component.onCompleted` to sync with the Dashboard and other overlays.
-- **Orientation**: Always handle both `horizontal` and `vertical` cases in UI components.
-- **Config Binding**: Prefer `Config.bar.*` properties for all layout-related state.
+- **Adaptive styling**: Widgets use `startRadius`/`endRadius` for "pill" continuity based on group position.
+- **Visibility registration**: Panels must register with `Visibilities` in `Component.onCompleted`.
+- **Orientation**: ALWAYS handle both `horizontal` and `vertical` cases in UI components.
+- **Config binding**: Use `Config.bar.*` properties for all layout-related state.
+- **Screen filtering**: Respects `Config.bar.screenList` for multi-monitor control.
