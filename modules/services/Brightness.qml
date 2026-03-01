@@ -190,14 +190,29 @@ Singleton {
                 return;
             if (isDdc && !busNum)
                 return;
-            initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10", "--brief"] : ["sh", "-c", `echo "a b c $(brightnessctl g) $(brightnessctl m)"`];
+            initProc.command = isDdc ? ["ddcutil", "-b", busNum, "getvcp", "10"] : ["sh", "-c", `echo "a b c $(brightnessctl g) $(brightnessctl m)"`];
             initProc.running = true;
         }
 
         readonly property Process initProc: Process {
             stdout: SplitParser {
                 onRead: data => {
-                    const tokens = data.trim().split(/\s+/);
+                    const trimmed = data.trim();
+                    // Try verbose format: "current value = X, max value = Y"
+                    const verboseMatch = trimmed.match(/current\s+value\s*=\s*(\d+).*max\s+value\s*=\s*(\d+)/);
+                    if (verboseMatch) {
+                        const currentRaw = parseInt(verboseMatch[1]);
+                        const maxRaw = parseInt(verboseMatch[2]);
+                        if (!isNaN(currentRaw) && !isNaN(maxRaw) && maxRaw > 0) {
+                            monitor.rawMaxBrightness = maxRaw;
+                            monitor.brightness = currentRaw / monitor.rawMaxBrightness;
+                            monitor.ready = true;
+                            root.brightnessChanged(monitor.brightness, monitor.screen);
+                        }
+                        return;
+                    }
+                    // Fallback: token-based (brief format / brightnessctl)
+                    const tokens = trimmed.split(/\s+/);
                     if (tokens.length < 2)
                         return;
                     const currentRaw = parseInt(tokens[tokens.length - 2]);

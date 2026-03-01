@@ -41,18 +41,14 @@ Item {
     readonly property var compositorMonitor: AxctlService.monitorFor(screen)
     readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !AxctlService.clients.values) ? [] : AxctlService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
 
-    // Fullscreen detection - check if a toplevel is fullscreen on this screen
+    // Fullscreen detection - use ToplevelManager (native Wayland) for reliable detection
     readonly property bool activeWindowFullscreen: {
-        if (!compositorMonitor || !toplevels) return false;
-
-        // Check all toplevels on active workspace
-        for (var i = 0; i < toplevels.length; i++) {
-            if (toplevels[i].fullscreen == true) {
-               return true;
-            }
-        }
-        return false;
+        const toplevel = ToplevelManager.activeToplevel;
+        if (!toplevel || !toplevel.activated)
+            return false;
+        return toplevel.fullscreen === true;
     }
+
 
     // Whether auto-hide should be active (not pinned, or fullscreen forces it)
     readonly property bool shouldAutoHide: !pinned || activeWindowFullscreen

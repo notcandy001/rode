@@ -49,48 +49,28 @@ Singleton {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // COMPOSITOR LAYOUT STATE (dynamic, not persisted)
+    // COMPOSITOR LAYOUT STATE (persisted via Config.compositor.layout)
     // ═══════════════════════════════════════════════════════════════
-    property string compositorLayout: "dwindle"
-    property bool compositorLayoutReady: false
+    property string compositorLayout: Config.compositor.layout || "dwindle"
+    property bool compositorLayoutReady: true
     readonly property var availableLayouts: ["dwindle", "master", "scrolling"]
 
     function setCompositorLayout(layout) {
         if (availableLayouts.includes(layout)) {
             compositorLayout = layout;
+            // Persist to Config so layout survives restarts
+            if (Config.compositor.layout !== layout) {
+                Config.compositor.layout = layout;
+            }
         }
     }
 
     function cycleCompositorLayout() {
         const currentIndex = availableLayouts.indexOf(compositorLayout);
         const nextIndex = (currentIndex + 1) % availableLayouts.length;
-        compositorLayout = availableLayouts[nextIndex];
+        setCompositorLayout(availableLayouts[nextIndex]);
     }
 
-    // Query current layout from AxctlService on startup
-    Process {
-        id: layoutQueryProcess
-        command: ["axctl", "config", "get", "layout"]
-        running: true
-        stdout: SplitParser {
-            onRead: data => {
-                try {
-                    const parsed = JSON.parse(data);
-                    if (parsed.str && root.availableLayouts.includes(parsed.str)) {
-                        root.compositorLayout = parsed.str;
-                        console.log("GlobalStates: Layout detected via axctl: " + parsed.str);
-                    }
-                } catch (e) {
-                    console.warn("GlobalStates: Error parsing layout from axctl: " + e);
-                }
-                root.compositorLayoutReady = true;
-            }
-        }
-        onExited: {
-            // Mark as ready even if parsing failed
-            root.compositorLayoutReady = true;
-        }
-    }
 
     // Ensure LockscreenService singleton is loaded
     Component.onCompleted: {

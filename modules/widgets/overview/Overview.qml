@@ -315,7 +315,13 @@ Item {
                     return wsId > minWs && wsId <= maxWs && win.monitor === monId;
                 }).map(win => ({
                             windowData: win,
-                            toplevel: toplevels.find(t => t.appId === (win.class || "") && t.title === (win.title || "")) || null
+                            toplevel: (() => {
+                                const cls = win.class || "";
+                                if (!cls) return null;
+                                const candidates = toplevels.filter(t => t.appId === cls);
+                                if (candidates.length <= 1) return candidates[0] || null;
+                                return candidates.find(t => t.title === (win.title || "")) || candidates[0];
+                            })()
                         }));
             }
 

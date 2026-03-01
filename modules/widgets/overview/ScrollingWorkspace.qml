@@ -281,7 +281,11 @@ Item {
                     readonly property var windowData: modelData
                     readonly property var toplevel: {
                         const toplevels = ToplevelManager.toplevels.values;
-                        return toplevels.find(t => t.appId === (windowData.class || "") && t.title === (windowData.title || "")) || null;
+                        const cls = windowData.class || "";
+                        if (!cls) return null;
+                        const candidates = toplevels.filter(t => t.appId === cls);
+                        if (candidates.length <= 1) return candidates[0] || null;
+                        return candidates.find(t => t.title === (windowData.title || "")) || candidates[0];
                     }
 
                     // Override position tracking for immediate visual update
