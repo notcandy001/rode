@@ -249,21 +249,21 @@ PanelWindow {
             
             // Respect top/bottom bar reservations so the sidebar doesn't overlap them
             anchors.topMargin: {
+                let margin = (Config.bar?.frameEnabled ?? false) ? (Config.bar?.frameThickness ?? 6) : 0;
                 if (unifiedPanel.barEnabled && unifiedPanel.barPosition === "top" && unifiedPanel.barPinned) {
-                    return unifiedPanel.barTargetHeight + unifiedPanel.barOuterMargin + (unifiedPanel.containBar ? Config.bar.frameThickness : 0);
+                    margin += unifiedPanel.barTargetHeight + unifiedPanel.barOuterMargin + (unifiedPanel.containBar ? Config.bar.frameThickness : 0);
                 }
-                return 0;
+                return margin;
             }
             
             anchors.bottomMargin: {
+                let margin = (Config.bar?.frameEnabled ?? false) ? (Config.bar?.frameThickness ?? 6) : 0;
                 if (unifiedPanel.barEnabled && unifiedPanel.barPosition === "bottom" && unifiedPanel.barPinned) {
-                    return unifiedPanel.barTargetHeight + unifiedPanel.barOuterMargin + (unifiedPanel.containBar ? Config.bar.frameThickness : 0);
+                    margin += unifiedPanel.barTargetHeight + unifiedPanel.barOuterMargin + (unifiedPanel.containBar ? Config.bar.frameThickness : 0);
+                } else if (unifiedPanel.dockEnabled && dockContent.dockPosition === "bottom" && dockContent.pinned) {
+                    margin += dockContent.dockHeight;
                 }
-                // Also respect dock if dock is at the bottom
-                if (unifiedPanel.dockEnabled && dockContent.dockPosition === "bottom" && dockContent.pinned) {
-                    return dockContent.dockHeight;
-                }
-                return 0;
+                return margin;
             }
         }
     }

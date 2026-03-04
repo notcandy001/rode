@@ -20,6 +20,7 @@ Item {
     property alias hitbox: sidebarContainer
     property alias hasActiveFocus: inputField.activeFocus
 
+    readonly property int sidebarMargin: 4
     property bool wantsFocus: false
     property bool menuExpanded: false
     property real menuWidth: 250
@@ -137,12 +138,12 @@ Item {
 
     Item {
         id: sidebarContainer
-        width: GlobalStates.assistantWidth
+        width: GlobalStates.assistantWidth + (root.sidebarMargin * 2)
         height: parent.height
 
         x: {
             if (GlobalStates.assistantPosition === "left")
-                return root.active ? 0 : -width;
+                return root.active ? 0 : -(width);
             return root.active ? parent.width - width : parent.width;
         }
 
@@ -158,6 +159,7 @@ Item {
 
         StyledRect {
             anchors.fill: parent
+            anchors.margins: root.sidebarMargin
             variant: "bg"
 
             ColumnLayout {

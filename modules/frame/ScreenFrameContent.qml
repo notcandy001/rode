@@ -38,6 +38,7 @@ Item {
     readonly property int sidebarWidth: GlobalStates.assistantWidth
     readonly property string sidebarPosition: GlobalStates.assistantPosition
 
+    readonly property int sidebarMargin: 4
     readonly property real baseThickness: {
         const base = Config.bar?.frameThickness ?? 6;
         return Math.max(1, Math.min(Math.round(base), 40));
@@ -80,7 +81,7 @@ Item {
     }
 
     // Sidebar expansion logic (synchronized with sidebar active and pinned)
-    readonly property int sidebarExpansion: (frameEnabled && sidebarPinned) ? Math.round(sidebarWidth * _sidebarAnimProgress) : 0
+    readonly property int sidebarExpansion: (frameEnabled && sidebarPinned) ? Math.round((sidebarWidth + (sidebarMargin * 2) + baseThickness) * _sidebarAnimProgress) : 0
 
     // --- Side-Specific Thickness Restoration ---
 
@@ -103,6 +104,7 @@ Item {
         }
         
         let expansion = (configContainBar && barPos === side) ? barExpansion : 0;
+        if (sidebarPosition === side) expansion += sidebarExpansion;
         return Math.round(t) + expansion;
     }
 

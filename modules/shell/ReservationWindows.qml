@@ -29,6 +29,8 @@ Item {
     property int sidebarWidth: GlobalStates.assistantWidth
     property string sidebarPosition: GlobalStates.assistantPosition
 
+    readonly property int sidebarMargin: 4
+
     readonly property int actualFrameSize: frameEnabled ? frameThickness : 0
 
     Item {
@@ -125,7 +127,8 @@ Item {
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
             if (sidebarEnabled && sidebarPosition === "left" && sidebarPinned) {
-                zone += sidebarWidth;
+                zone += sidebarWidth + (sidebarMargin * 2);
+                if (frameEnabled) zone += actualFrameSize;
             }
             if (dockEnabled && dockPosition === "left" && dockPinned) zone += dockHeight;
             return zone;
@@ -160,7 +163,8 @@ Item {
                 if (containBar && frameEnabled) zone += actualFrameSize;
             }
             if (sidebarEnabled && sidebarPosition === "right" && sidebarPinned) {
-                zone += sidebarWidth;
+                zone += sidebarWidth + (sidebarMargin * 2);
+                if (frameEnabled) zone += actualFrameSize;
             }
             if (dockEnabled && dockPosition === "right" && dockPinned) zone += dockHeight;
             return zone;
