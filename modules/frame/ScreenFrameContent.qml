@@ -42,7 +42,7 @@ Item {
     readonly property int sidebarMargin: 4
     readonly property real baseThickness: {
         const base = Config.bar?.frameThickness ?? 6;
-        return Math.max(1, Math.min(Math.round(base), 40));
+        return Math.max(0, Math.min(Math.round(base), 40));
     }
 
     readonly property int barSize: {

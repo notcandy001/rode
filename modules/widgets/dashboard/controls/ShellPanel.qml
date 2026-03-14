@@ -923,7 +923,7 @@ Item {
                         NumberInputRow {
                             label: "Thickness"
                             value: Config.bar.frameThickness ?? 6
-                            minValue: 1
+                            minValue: 0
                             maxValue: 40
                             suffix: "px"
                             onValueEdited: newValue => {

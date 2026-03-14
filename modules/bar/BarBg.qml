@@ -36,7 +36,7 @@ Item {
         variant: "barbg"
         visible: Config.showBackground
         radius: Styling.radius(effectiveContainBar ? 4 : 0)
-        enableBorder: true
+        enableBorder: !effectiveContainBar || (Config.bar.keepBarBorder ?? false)
 
         // Position and size expanded to cover corners
         x: (position === "right") ? -cornerSize : 0
