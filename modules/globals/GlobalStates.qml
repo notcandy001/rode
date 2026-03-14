@@ -49,19 +49,23 @@ Singleton {
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // COMPOSITOR LAYOUT STATE (persisted via Config.compositor.layout)
+    // COMPOSITOR LAYOUT STATE (persisted via StateService)
     // ═══════════════════════════════════════════════════════════════
-    property string compositorLayout: Config.compositor.layout || "dwindle"
+    property string compositorLayout: "dwindle"
     property bool compositorLayoutReady: true
     readonly property var availableLayouts: ["dwindle", "master", "scrolling"]
 
     function setCompositorLayout(layout) {
         if (availableLayouts.includes(layout)) {
             compositorLayout = layout;
-            // Persist to Config so layout survives restarts
-            if (Config.compositor.layout !== layout) {
-                Config.compositor.layout = layout;
-            }
+            StateService.set("compositorLayout", layout);
+        }
+    }
+
+    Connections {
+        target: StateService
+        function onStateLoaded() {
+            root.compositorLayout = StateService.get("compositorLayout", "dwindle");
         }
     }
 
@@ -76,6 +80,10 @@ Singleton {
     Component.onCompleted: {
         // Reference the singleton to ensure it loads
         LockscreenService.toString();
+        // Load layout from state if StateService is already initialized
+        if (StateService.initialized) {
+            compositorLayout = StateService.get("compositorLayout", "dwindle");
+        }
     }
 
     // Persistent launcher state across monitors
@@ -438,7 +446,6 @@ Singleton {
 
     // Compositor config properties (AxctlService)
     readonly property var _compositorProps: [
-        "layout",
         "syncBorderWidth", "borderSize",
         "syncRoundness", "rounding",
         "gapsIn", "gapsOut",

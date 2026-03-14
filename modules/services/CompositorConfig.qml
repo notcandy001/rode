@@ -223,9 +223,7 @@ QtObject {
 
     property Connections compositorConfigConnections: Connections {
         target: Config.compositor
-        function onLayoutChanged() {
-            GlobalStates.setCompositorLayout(Config.compositor.layout);
-        }
+
         function onBorderSizeChanged() {
             applyCompositorConfig();
         }

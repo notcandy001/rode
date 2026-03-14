@@ -66,7 +66,9 @@ ClippingRectangle {
     // Resolve gradient stops into vec4 color array for shader uniforms
     function resolveStopColor(index) {
         if (!gradientStops || index >= gradientStops.length) return Qt.vector4d(0,0,0,0);
-        const c = Config.resolveColor(gradientStops[index][0]);
+        const resolved = Config.resolveColor(gradientStops[index][0]);
+        // Qt.color() ensures hex strings become proper color objects with .r/.g/.b/.a
+        const c = Qt.color(resolved);
         return Qt.vector4d(c.r, c.g, c.b, c.a);
     }
 
