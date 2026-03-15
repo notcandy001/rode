@@ -34,6 +34,9 @@ PanelWindow {
     property bool usingFallback: false
     property bool _wallpaperDirInitialized: false
     property string currentMatugenScheme: wallpaperConfig.adapter.matugenScheme
+    property var perScreenWallpapers: wallpaperConfig.adapter.perScreenWallpapers || {}
+    property string effectiveWallpaper: perScreenWallpapers[currentScreenName] || currentWallpaper
+    property string currentScreenName: wallpaper.screen ? wallpaper.screen.name : ""
     property alias tintEnabled: wallpaperAdapter.tintEnabled
     property int thumbnailsVersion: 0
 
@@ -278,22 +281,55 @@ PanelWindow {
     // Matugen se ejecuta manualmente en las funciones de cambio
     {}
 
-    function setWallpaper(path) {
+    function setWallpaper(path, targetScreen = null) {
         if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager !== wallpaper) {
-            GlobalStates.wallpaperManager.setWallpaper(path);
+            GlobalStates.wallpaperManager.setWallpaper(path, targetScreen);
             return;
         }
 
-        console.log("setWallpaper called with:", path);
+        console.log("setWallpaper called with:", path, "for screen:", targetScreen);
         initialLoadCompleted = true;
         var pathIndex = wallpaperPaths.indexOf(path);
         if (pathIndex !== -1) {
-            currentIndex = pathIndex;
-            wallpaperConfig.adapter.currentWall = path;
-            runMatugenForCurrentWallpaper();
+            if (targetScreen) {
+                // If targeting a specific screen, save to perScreenWallpapers instead of currentWall
+                let perScreen = Object.assign({}, wallpaperConfig.adapter.perScreenWallpapers || {});
+                perScreen[targetScreen] = path;
+                wallpaperConfig.adapter.perScreenWallpapers = perScreen;
+                
+                // If it happens to be setting the primary monitor's wallpaper, we also run Matugen 
+                // because Matugen color generation is always based on the primary monitor.
+                // However, since we don't strictly enforce which is primary, we will assume 
+                // if it's the primary monitor, we probably want to update currentWall as well.
+                // To keep it simple: if currentWall is empty, we set it.
+                if (!wallpaperConfig.adapter.currentWall) {
+                    currentIndex = pathIndex;
+                    wallpaperConfig.adapter.currentWall = path;
+                    runMatugenForCurrentWallpaper();
+                }
+            } else {
+                // Global fallback target
+                currentIndex = pathIndex;
+                wallpaperConfig.adapter.currentWall = path;
+                runMatugenForCurrentWallpaper();
+            }
             generateLockscreenFrame(path);
         } else {
             console.warn("Wallpaper path not found in current list:", path);
+        }
+    }
+
+    function clearPerScreenWallpaper(targetScreen) {
+        if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager !== wallpaper) {
+            GlobalStates.wallpaperManager.clearPerScreenWallpaper(targetScreen);
+            return;
+        }
+        
+        console.log("Clearing per-screen wallpaper for:", targetScreen);
+        let perScreen = Object.assign({}, wallpaperConfig.adapter.perScreenWallpapers || {});
+        if (perScreen[targetScreen]) {
+            delete perScreen[targetScreen];
+            wallpaperConfig.adapter.perScreenWallpapers = perScreen;
         }
     }
 
@@ -365,11 +401,11 @@ PanelWindow {
             return;
         }
 
-        if (currentWallpaper && initialLoadCompleted) {
-            console.log("Running Matugen for current wallpaper:", currentWallpaper);
+        if (effectiveWallpaper && initialLoadCompleted) {
+            console.log("Running Matugen for current wallpaper:", effectiveWallpaper);
 
-            var fileType = getFileType(currentWallpaper);
-            var matugenSource = getColorSource(currentWallpaper);
+            var fileType = getFileType(effectiveWallpaper);
+            var matugenSource = getColorSource(effectiveWallpaper);
 
             console.log("Using source for matugen:", matugenSource, "(type:", fileType + ")");
 
@@ -639,6 +675,7 @@ PanelWindow {
             property string matugenScheme: "scheme-tonal-spot"
             property string activeColorPreset: ""
             property bool tintEnabled: false
+            property var perScreenWallpapers: ({})
 
             onActiveColorPresetChanged: {
                 if (wallpaperConfig.adapter.activeColorPreset !== wallpaper.activeColorPreset) {
@@ -1146,7 +1183,7 @@ PanelWindow {
         WallpaperImage {
             id: wallImage
             anchors.fill: parent
-            source: wallpaper.currentWallpaper
+            source: wallpaper.effectiveWallpaper
         }
     }
 
@@ -1345,7 +1382,7 @@ PanelWindow {
                 Process {
                     id: mpvpaperProcess
                     running: false
-                    command: sourceFile ? ["bash", scriptPath, sourceFile, (wallpaper.tintEnabled ? wallpaper.mpvShaderPath : "")] : []
+                    command: sourceFile && wallpaper.currentScreenName ? ["bash", scriptPath, sourceFile, (wallpaper.tintEnabled ? wallpaper.mpvShaderPath : ""), wallpaper.currentScreenName] : []
 
                     stdout: StdioCollector {
                         onStreamFinished: {

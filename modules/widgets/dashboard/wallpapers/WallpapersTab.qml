@@ -22,6 +22,28 @@ FocusScope {
         selectedIndex = newIndex;
     }
 
+    readonly property string currentScreenName: AxctlService.focusedMonitor ? AxctlService.focusedMonitor.name : ""
+
+    property bool isPerScreen: {
+        if (!GlobalStates.wallpaperManager || currentScreenName === "") return false;
+        let perScreen = GlobalStates.wallpaperManager.perScreenWallpapers || {};
+        return perScreen[currentScreenName] !== undefined;
+    }
+
+    function togglePerScreenMode() {
+        if (!GlobalStates.wallpaperManager || currentScreenName === "") return;
+        
+        if (isPerScreen) {
+            GlobalStates.wallpaperManager.clearPerScreenWallpaper(currentScreenName);
+        } else {
+            // Apply current wallpaper to this screen to toggle it on
+            let currentWall = GlobalStates.wallpaperManager.currentWallpaper;
+            if (currentWall) {
+                GlobalStates.wallpaperManager.setWallpaper(currentWall, currentScreenName);
+            }
+        }
+    }
+
     property var activeFilters: []  // Lista de tipos de archivo seleccionados para filtrar
 
     // Configuración interna del grid
@@ -30,6 +52,13 @@ FocusScope {
 
     // Array de elementos focusables para navegación cíclica
     property var focusableElements: [
+        {
+            id: "perScreenCheckbox",
+            focusFunc: function () {
+                perScreenCheckboxContainer.keyboardNavigationActive = true;
+                perScreenCheckbox.forceActiveFocus();
+            }
+        },
         {
             id: "oledCheckbox",
             focusFunc: function () {
@@ -126,11 +155,23 @@ FocusScope {
 
     // Función para encontrar el índice del wallpaper actual en la lista filtrada
     function findCurrentWallpaperIndex() {
-        if (!GlobalStates.wallpaperManager || !GlobalStates.wallpaperManager.currentWallpaper) {
+        if (!GlobalStates.wallpaperManager) {
             return -1;
         }
 
-        const currentWallpaper = GlobalStates.wallpaperManager.currentWallpaper;
+        let perScreen = GlobalStates.wallpaperManager.perScreenWallpapers || {};
+        let currentWallpaper = "";
+        
+        if (currentScreenName !== "" && perScreen[currentScreenName] !== undefined) {
+            currentWallpaper = perScreen[currentScreenName];
+        } else {
+            currentWallpaper = GlobalStates.wallpaperManager.currentWallpaper;
+        }
+
+        if (!currentWallpaper) {
+            return -1;
+        }
+
         return filteredWallpapers.indexOf(currentWallpaper);
     }
 
@@ -290,12 +331,159 @@ FocusScope {
                     if (selectedIndex >= 0 && selectedIndex < filteredWallpapers.length) {
                         let selectedWallpaper = filteredWallpapers[selectedIndex];
                         if (selectedWallpaper && GlobalStates.wallpaperManager) {
-                            GlobalStates.wallpaperManager.setWallpaper(selectedWallpaper);
+                            if (isPerScreen && currentScreenName !== "") {
+                                GlobalStates.wallpaperManager.setWallpaper(selectedWallpaper, currentScreenName);
+                            } else {
+                                GlobalStates.wallpaperManager.setWallpaper(selectedWallpaper);
+                            }
                         }
                     }
                 }
             }
 
+            // Per-Screen Monitor toggle
+            Item {
+                id: perScreenCheckboxContainer
+                Layout.preferredWidth: 120 // un poco mas ancho para que quepa el nombre monitor si es largo
+                Layout.preferredHeight: 48
+
+                property bool keyboardNavigationActive: false
+
+                StyledRect {
+                    variant: perScreenCheckboxContainer.keyboardNavigationActive && perScreenCheckbox.activeFocus ? "focus" : "pane"
+                    anchors.fill: parent
+                    radius: Styling.radius(4)
+                    opacity: 1.0
+
+                    Behavior on opacity {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: Config.animDuration / 2
+                            easing.type: Easing.OutQuart
+                        }
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 4
+                        spacing: 4
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            color: Colors.background
+                            radius: Styling.radius(0)
+
+                            Text {
+                                anchors.fill: parent
+                                text: currentScreenName // Get the monitor name!
+                                color: Colors.overSurface
+                                font.family: Config.theme.font
+                                font.pixelSize: Config.theme.fontSize
+                                font.weight: Font.Medium
+                                verticalAlignment: Text.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                
+                                Behavior on color {
+                                    enabled: Config.animDuration > 0
+                                    ColorAnimation {
+                                        duration: Config.animDuration / 2
+                                        easing.type: Easing.OutQuart
+                                    }
+                                }
+                            }
+                        }
+
+                        Item {
+                            id: perScreenCheckbox
+                            Layout.preferredWidth: 40
+                            Layout.preferredHeight: 40
+                            
+                            property bool checked: isPerScreen
+
+                            onActiveFocusChanged: {
+                                if (!activeFocus) {
+                                    perScreenCheckboxContainer.keyboardNavigationActive = false;
+                                }
+                            }
+
+                            Keys.onPressed: event => {
+                                if (event.key === Qt.Key_Tab) {
+                                    perScreenCheckboxContainer.keyboardNavigationActive = false;
+                                    if (event.modifiers & Qt.ShiftModifier) {
+                                        wallpapersTabRoot.focusPreviousElement();
+                                    } else {
+                                        wallpapersTabRoot.focusNextElement();
+                                    }
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                                    togglePerScreenMode();
+                                    event.accepted = true;
+                                } else if (event.key === Qt.Key_Escape) {
+                                    perScreenCheckboxContainer.keyboardNavigationActive = false;
+                                    focusSearch();
+                                    event.accepted = true;
+                                }
+                            }
+
+                            Item {
+                                anchors.fill: parent
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    color: Colors.background
+                                    visible: !perScreenCheckbox.checked
+                                }
+
+                                StyledRect {
+                                    variant: "primary"
+                                    anchors.fill: parent
+                                    radius: Styling.radius(0)
+                                    visible: perScreenCheckbox.checked
+                                    opacity: perScreenCheckbox.checked ? 1.0 : 0.0
+
+                                    Behavior on opacity {
+                                        enabled: Config.animDuration > 0
+                                        NumberAnimation {
+                                            duration: Config.animDuration / 2
+                                            easing.type: Easing.OutQuart
+                                        }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: Icons.accept
+                                        color: Styling.srItem("primary")
+                                        font.family: Icons.font
+                                        font.pixelSize: 20
+                                        scale: perScreenCheckbox.checked ? 1.0 : 0.0
+
+                                        Behavior on scale {
+                                            enabled: Config.animDuration > 0
+                                            NumberAnimation {
+                                                duration: Config.animDuration / 2
+                                                easing.type: Easing.OutBack
+                                                easing.overshoot: 1.5
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    togglePerScreenMode();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             // OLED Mode
             Item {
                 id: oledCheckboxContainer
@@ -755,7 +943,16 @@ FocusScope {
                                 property bool isCurrentWallpaper: {
                                     if (!GlobalStates.wallpaperManager || wallpaperGrid.currentIndex < 0)
                                         return false;
-                                    return GlobalStates.wallpaperManager.currentWallpaper === filteredWallpapers[wallpaperGrid.currentIndex];
+                                        
+                                    let perScreen = GlobalStates.wallpaperManager.perScreenWallpapers || {};
+                                    let currentWall = "";
+                                    if (currentScreenName !== "" && perScreen[currentScreenName] !== undefined) {
+                                        currentWall = perScreen[currentScreenName];
+                                    } else {
+                                        currentWall = GlobalStates.wallpaperManager.currentWallpaper;
+                                    }
+                                        
+                                    return currentWall === filteredWallpapers[wallpaperGrid.currentIndex];
                                 }
                                 property bool showHoveredItem: currentItem && currentItem.isHovered && !visible
 
@@ -862,7 +1059,15 @@ FocusScope {
                     property bool isCurrentWallpaper: {
                         if (!GlobalStates.wallpaperManager)
                             return false;
-                        return GlobalStates.wallpaperManager.currentWallpaper === modelData;
+                            
+                        let perScreen = GlobalStates.wallpaperManager.perScreenWallpapers || {};
+                        let currentWall = "";
+                        if (currentScreenName !== "" && perScreen[currentScreenName] !== undefined) {
+                            currentWall = perScreen[currentScreenName];
+                        } else {
+                            currentWall = GlobalStates.wallpaperManager.currentWallpaper;
+                        }
+                        return currentWall === modelData;
                     }
 
                     property bool isHovered: false
@@ -950,7 +1155,11 @@ FocusScope {
                             if (wallpaperGrid.isScrolling)
                                 return;
                             if (GlobalStates.wallpaperManager) {
-                                GlobalStates.wallpaperManager.setWallpaper(modelData);
+                                if (isPerScreen && currentScreenName !== "") {
+                                    GlobalStates.wallpaperManager.setWallpaper(modelData, currentScreenName);
+                                } else {
+                                    GlobalStates.wallpaperManager.setWallpaper(modelData);
+                                }
                             }
                         }
                     }
