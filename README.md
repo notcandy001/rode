@@ -44,7 +44,7 @@ An <i><b>Ax</b>tremely</i> customizable shell.
 <h2><sub><img src="https://raw.githubusercontent.com/Tarikul-Islam-Anik/Animated-Fluent-Emojis/master/Emojis/Objects/Package.png" alt="Package" width="32" height="32" /></sub> Installation</h2>
 
 ```bash
-curl -L get.axeni.de/rode | sh
+curl -L get.roderic.me/rode | sh
 ```
 
 This will install Ambxst and its dependencies. You will have the `rode` command available in your terminal, which you can use to start the shell.
