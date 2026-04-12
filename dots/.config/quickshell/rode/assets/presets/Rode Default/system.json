@@ -1,0 +1,46 @@
+{
+    "disks": ["/"],
+    "updateServiceEnabled": true,
+    "idle": {
+        "general": {
+            "lock_cmd": "rode lock",
+            "before_sleep_cmd": "loginctl lock-session",
+            "after_sleep_cmd": "rode screen on"
+        },
+        "listeners": [
+            {
+                "timeout": 150,
+                "onTimeout": "rode brightness 10 -s",
+                "onResume": "rode brightness -r"
+            },
+            {
+                "timeout": 300,
+                "onTimeout": "loginctl lock-session"
+            },
+            {
+                "timeout": 330,
+                "onTimeout": "rode screen off",
+                "onResume": "rode screen on"
+            },
+            {
+                "timeout": 1800,
+                "onTimeout": "rode suspend"
+            }
+        ]
+    },
+    "ocr": {
+        "eng": true,
+        "spa": true,
+        "lat": false,
+        "jpn": false,
+        "chi_sim": false,
+        "chi_tra": false,
+        "kor": false
+    },
+    "pomodoro": {
+        "workTime": 1500,
+        "restTime": 300,
+        "autoStart": false,
+        "syncSpotify": false
+    }
+}
