@@ -133,6 +133,14 @@ If you are having trouble or have any questions:
 ---
 
 ## Credits
+
+### Upstream
+
+This project would not exist without [**Ambxst**](https://github.com/Axenide/Ambxst) by [**Axenide**](https://github.com/Axenide). Massive thanks for creating such an incredible, feature-rich shell and making it open source. 💖
+
+All original credits from the Ambxst project:
+
+
 - [outfoxxed](https://outfoxxed.me/) for creating Quickshell and great documentation!
 - [end-4](https://github.com/end-4) for his awesome projects. I learned a lot from them! (And *yoinked* a lot of code, too. 😅)
 - [soramane](https://github.com/soramanew) for helping me when I started with Quickshell. (You probably don't remember, but still, heh.)
