@@ -60,7 +60,7 @@ This will install Ambxst and its dependencies. You will have the `rode` command 
 source = ~/.local/share/rode/hyprland.conf
 
 # OVERRIDES
-# Down here you can write or source anything that you want to override from Ambxst's settings.
+# Down here you can write or source anything that you want to override from Rode's settings.
 ```
 
 As stated, anything you want to override from Ambxst's settings should be written under the "OVERRIDES" section.
