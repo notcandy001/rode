@@ -1,5 +1,5 @@
 <p align="center">
-<img src="./assets/ambxst/rode-logo-color.png" alt="Rode Logo" style="width: 50%;" align="center" />
+<img src="./assets/ambxst/rode-logo-color.png" alt="Rode Logo" style="width: 100%;" align="center" />
   <br>
   <br>
 An <i><b>Ax</b>tremely</i> customizable shell.
