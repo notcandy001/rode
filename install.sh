@@ -368,7 +368,7 @@ install_axctl() {
   fi
 
   log_info "Installing rodctl..."
-  curl -L github.com/notcandy/rode | sh
+  curl -L https://raw.githubusercontent.com/notcandy001/rodctl/refs/heads/main/install.sh
   log_success "rodctl installed"
 }
 
