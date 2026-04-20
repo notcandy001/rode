@@ -2,7 +2,7 @@
 set -e
 
 # === Configuration ===
-REPO_URL="https://github.com/notcandy/rode.git"
+REPO_URL="https://github.com/notcandy001/rode.git"
 INSTALL_PATH="$HOME/.local/src/rode"
 BIN_DIR="/usr/local/bin"
 QUICKSHELL_REPO="https://git.outfoxxed.me/outfoxxed/quickshell"
