@@ -361,14 +361,14 @@ install_quickshell() {
   log_success "Quickshell installed to ~/.local/bin/qs"
 }
 
-install_axctl() {
+install_rodctl() {
   if [[ "$DISTRO" == "nixos" ]]; then
     log_info "Skipping rodctl install on NixOS (managed by flake)"
     return
   fi
 
   log_info "Installing rodctl..."
-  curl -L https://raw.githubusercontent.com/notcandy001/rodctl/refs/heads/main/install.sh
+  curl -L https://raw.githubusercontent.com/notcandy001/rodctl/refs/heads/main/install.sh | bash 
   log_success "rodctl installed"
 }
 
